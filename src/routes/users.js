@@ -28,13 +28,33 @@ router.post('/login', async (req, res) => {
     }
 })
 
-router.get('/', auth, async (req, res) => {
+router.post('/logout', auth, async (req, res) => {
     try {
-        // send the ui template file for login
-        res.status(200).send(await User.find({}))
+        // filter the user.token value in the database, such that the current token is removed.
+        req.user.tokens = req.user.tokens.filter(({token}) => (token != req.token));
+        await req.user.save();
+
+        res.status(200).send({msg: "Logout successful"});
     } catch (e) {
-        res.status(500).send('Some error')
+        res.status(500).send(e);
     }
+});
+
+router.post('/logoutAll', auth, async (req, res) => {
+    try {
+        req.user.tokens = [];
+        delete req.token;
+        await req.user.save();
+
+        res.status(200).send({msg: "Successfully Logout from all devices"});
+    } catch (e) {
+        req.status(500).send({e});
+    }
+});
+
+router.get('/me', auth, async (req, res) => {
+    // send only the user details which logged in 
+    res.send(req.user);
 })
 
 router.get('/:id', async (req, res) => {

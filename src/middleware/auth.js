@@ -13,6 +13,8 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+const {PRIVATE_KEY_JWT} = process.env;
+
 const auth = async (req, res, next) => {
   try {
     // header => Bearer token
@@ -30,9 +32,11 @@ const auth = async (req, res, next) => {
     // we are storing the user object fetched from database into the request object, so that the following route don't have to 
     // again fetch data of the user from db.
     req.user = user;
+    req.token = token;
 
     next();
   } catch (e) {
+    console.log(e);
     res.status(401).send({ error: 'Please Authenticate' });
   }
 };
