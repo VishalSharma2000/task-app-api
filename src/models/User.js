@@ -64,7 +64,11 @@ const userSchema = new mongoose.Schema({
 This is one way (manual) way to hide all the sensitive data of the user, this is manual bcoz we have to always call this function to get the 
 user object. 
 */
-userSchema.methods.getPublicProfile = function () {
+// userSchema.methods.getPublicProfile = function () {
+/* toJSON function is automatically called with JSON.stringify function is called. 
+So, when we do req.send(), JSON.stringify is called in backend to convert the data to JSON and then this function is called where we can make 
+changes in the data. This is automate. So, we don't have manually call this function whenever we want to send data as response */
+userSchema.methods.toJSON = function () {
     const user = this; // only to make the code more understandable
 
     let tempObject = user.toObject();

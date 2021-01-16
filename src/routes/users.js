@@ -22,7 +22,7 @@ router.post('/login', async (req, res) => {
         // Creating a own function in Model file
         const user = await User.findByCredentials(req.body.email, req.body.password);
         const token = await user.generateAuthToken();
-        res.json({ user: user.getPublicProfile(), token })
+        res.json({ user, token })
     } catch (e) {
         res.status(400).send();
     }
