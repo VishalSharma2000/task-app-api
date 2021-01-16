@@ -60,10 +60,26 @@ const userSchema = new mongoose.Schema({
  * Note: findOneAndUpdate does not execute the middleware, it overpasses it. So, we can either make some changes while saving the document, or we can have a different hook as middleware for findOneAndUpdate
 */
 
+/* This function is created to return user object after deleting all the sensitive data like passwords
+This is one way (manual) way to hide all the sensitive data of the user, this is manual bcoz we have to always call this function to get the 
+user object. 
+*/
+userSchema.methods.getPublicProfile = function () {
+    const user = this; // only to make the code more understandable
+
+    let tempObject = user.toObject();
+    /* with normal user object all the mongoose function like save, etc are associated. So, to get a normal object back from database */
+
+    delete tempObject.password;
+    delete tempObject.tokens;
+
+    return tempObject;
+}
+
 userSchema.methods.generateAuthToken = function async() {
     const user = this; // for more readability
 
-    const token = jwt.sign({ _id: user._id.toString() }, PRIVATE_KEY_JWT, { expiresIn: '100 seconds' });
+    const token = jwt.sign({ _id: user._id.toString() }, PRIVATE_KEY_JWT, { expiresIn: '5 minutes' });
     console.log(token);
 
     user.tokens = user.tokens.concat({ token })

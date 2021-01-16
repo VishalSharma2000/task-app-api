@@ -22,7 +22,7 @@ router.post('/login', async (req, res) => {
         // Creating a own function in Model file
         const user = await User.findByCredentials(req.body.email, req.body.password);
         const token = await user.generateAuthToken();
-        res.json({ user, token })
+        res.json({ user: user.getPublicProfile(), token })
     } catch (e) {
         res.status(400).send();
     }
@@ -31,10 +31,10 @@ router.post('/login', async (req, res) => {
 router.post('/logout', auth, async (req, res) => {
     try {
         // filter the user.token value in the database, such that the current token is removed.
-        req.user.tokens = req.user.tokens.filter(({token}) => (token != req.token));
+        req.user.tokens = req.user.tokens.filter(({ token }) => (token != req.token));
         await req.user.save();
 
-        res.status(200).send({msg: "Logout successful"});
+        res.status(200).send({ msg: "Logout successful" });
     } catch (e) {
         res.status(500).send(e);
     }
@@ -46,9 +46,9 @@ router.post('/logoutAll', auth, async (req, res) => {
         delete req.token;
         await req.user.save();
 
-        res.status(200).send({msg: "Successfully Logout from all devices"});
+        res.status(200).send({ msg: "Successfully Logout from all devices" });
     } catch (e) {
-        req.status(500).send({e});
+        req.status(500).send({ e });
     }
 });
 
