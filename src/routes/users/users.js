@@ -3,30 +3,6 @@ const router = express.Router();
 const auth = require('../../middleware/auth');
 const User = require('../../models/User');
 
-router.post('/logout', async (req, res) => {
-    try {
-        // filter the user.token value in the database, such that the current token is removed.
-        req.user.tokens = req.user.tokens.filter(({ token }) => (token != req.token));
-        await req.user.save();
-
-        res.status(200).send({ msg: "Logout successful" });
-    } catch (e) {
-        res.status(500).send(e);
-    }
-});
-
-router.post('/logoutAll', async (req, res) => {
-    try {
-        req.user.tokens = [];
-        delete req.token;
-        await req.user.save();
-
-        res.status(200).send({ msg: "Successfully Logout from all devices" });
-    } catch (e) {
-        req.status(500).send({ e });
-    }
-});
-
 router.get('/me', async (req, res) => {
     // send only the user details which logged in 
     res.send(req.user);
@@ -43,7 +19,7 @@ router.get('/:id', async (req, res) => {
     }
 })
 
-router.patch('/:id', async (req, res) => {
+router.patch('/me', async (req, res) => {
     const updates = Object.keys(req.body)       // extracting what updates user want to make
     const allowedUpdates = ['name', 'email', 'password', 'age']     // all the allowed updates
     // check if every element in updates is present in allowed updates, if any updates is not present then return false and break
@@ -54,13 +30,13 @@ router.patch('/:id', async (req, res) => {
 
     try {
         /** Since, validation check does not happen automatically during update operation, runValidators: true, tell mongoose to run
-         * all the validations functions when update operation is performed
+         * all the validations functions wh en update operation is performed
          * new: true, return the updated document rather than returning original document
          */
         // const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
         /* Since, findByIdAndUpdate does not execute the middleware we have to change the way of updating a document. */
 
-        const user = await User.findById(req.params.id);
+        const user = await User.findById(req.user._id);
 
         if (!user) {
             // user with specified id does not exist, return 404 page not found
@@ -77,9 +53,9 @@ router.patch('/:id', async (req, res) => {
     }
 })
 
-router.delete('/:id', async (req, res) => {
+router.delete('/me', async (req, res) => {
     try {
-        const user = await User.findByIdAndDelete(req.params.id)
+        const user = await User.findByIdAndDelete(req.user._id)
 
         // Handle user not found
         if (!user) return res.status(404).send('User not found')
@@ -89,5 +65,30 @@ router.delete('/:id', async (req, res) => {
         res.status(400).send(e)
     }
 })
+
+router.post('/logout', async (req, res) => {
+    try {
+        // filter the user.token value in the database, such that the current token is removed.
+        req.user.tokens = req.user.tokens.filter(({ token }) => (token != req.token));
+        await req.user.save();
+
+        res.status(200).send({ msg: "Logout successful" });
+    } catch (e) {
+        res.status(500).send(e);
+    }
+});
+
+/* To logout user from all devices */
+router.post('/logoutAll', async (req, res) => {
+    try {
+        req.user.tokens = [];
+        delete req.token;
+        await req.user.save();
+
+        res.status(200).send({ msg: "Successfully Logout from all devices" });
+    } catch (e) {
+        req.status(500).send({ e });
+    }
+});
 
 module.exports = router

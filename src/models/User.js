@@ -83,7 +83,7 @@ userSchema.methods.toJSON = function () {
 userSchema.methods.generateAuthToken = function async() {
     const user = this; // for more readability
 
-    const token = jwt.sign({ _id: user._id.toString() }, PRIVATE_KEY_JWT, { expiresIn: '5 minutes' });
+    const token = jwt.sign({ _id: user._id.toString() }, PRIVATE_KEY_JWT, { expiresIn: 600000    });
     console.log(token);
 
     user.tokens = user.tokens.concat({ token })
@@ -96,12 +96,18 @@ userSchema.statics.findByCredentials = async (email, password) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-        return 'Unable to Login';
+        throw {
+            name: 'Server Error',
+            message: 'User does not exist'
+        };
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-        return 'Unable to Login';
+        throw {
+            name: 'Server Error',
+            message: 'Password Mismatch'
+        };
     }
 
     return user;

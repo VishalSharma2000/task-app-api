@@ -1,9 +1,12 @@
 const express = require('express')
 const router = express.Router()
-const Task = require('./../models/Task')
+const Task = require('../../models/Task')
 
 router.post('/', async (req, res) => {
-    const task = new Task(req.body)
+    const task = new Task({
+        ...req.body,
+        owner: req.user._id
+    });
 
     try {
         await task.save()       // save task to db
@@ -14,6 +17,7 @@ router.post('/', async (req, res) => {
     }
 })
 
+// fetch all uncompleted task
 router.get('/', async (req, res) => {
     try {
         // fetch all uncompletedTask from db
@@ -28,6 +32,24 @@ router.get('/', async (req, res) => {
     }
 })
 
+// to fetch a particular task
+router.get('/:id', async (req, res) => {
+    const { id: _id } = req.params;
+    const { user } = req;
+
+    try {
+        const task = await Task.findOne({ _id, owner: user._id });
+
+        if(!task) 
+            return res.status(404).json({ msg: "Task not found"});
+        
+        res.status(200).send(task);
+    } catch (e) {
+        res.status(500).send(e);
+    }
+});
+
+// update a specific task
 router.patch('/:id', async (req, res) => {
     // refer patch request for users
     const updates = Object.keys(req.body)
