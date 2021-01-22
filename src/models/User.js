@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const validator = require('validator')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const Task = require('./Task');
 
 const { PRIVATE_KEY_JWT } = process.env;
 
@@ -27,7 +28,7 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true,
-        minlength: 7,
+        minlength: [7, 'Password should be atleast 7 character long'],
         trim: true,
         validate(value) {
             if (value.toLowerCase().includes('password'))
@@ -50,6 +51,8 @@ const userSchema = new mongoose.Schema({
             required: true,
         }
     }]
+}, {
+    timestamps: true, // will tell mongoose to create two more fields, createdAt and updatedAt
 })
 
 /** Middleware is used to run some function either before or after saving data into database. 
@@ -83,8 +86,7 @@ userSchema.methods.toJSON = function () {
 userSchema.methods.generateAuthToken = function async() {
     const user = this; // for more readability
 
-    const token = jwt.sign({ _id: user._id.toString() }, PRIVATE_KEY_JWT, { expiresIn: 600000    });
-    console.log(token);
+    const token = jwt.sign({ _id: user._id.toString() }, PRIVATE_KEY_JWT, { expiresIn: 600000 });
 
     user.tokens = user.tokens.concat({ token })
     user.save();
@@ -123,6 +125,17 @@ userSchema.pre('save', async function (next) {
 
     next();
 })
+
+// delete user tasks when user is removed
+userSchema.pre('remove', { document: false, query: true }, async function (next) {
+    const user = this;
+
+    console.log('called');
+    const val = await Task.deleteMany({ owner: user._id });
+    console.log('retured value: ', val);
+
+    next();
+});
 
 const User = mongoose.model('user', userSchema);
 

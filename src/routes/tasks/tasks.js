@@ -17,18 +17,32 @@ router.post('/', async (req, res) => {
     }
 })
 
-// fetch all uncompleted task
+// fetch all tasks
+// /tasks?completed=false
+// /tasks?limit=10&skip=6
+// /tasks?sortBy=createdBy&order=asc
 router.get('/', async (req, res) => {
+    const { completed, limit, skip, sortBy, order } = req.query;
+
+    let match = {};
+    match.owner = req.user._id;
+
+    if(completed) 
+        match.completed = completed === 'true' ? true : false;
+
+    let query = Task.find(match);
+    if(limit) query.limit(parseInt(limit));
+    if(skip) query.skip(parseInt(skip));
+    if(sortBy) query.sort({ [sortBy]: order === 'desc' ? -1 : 1 })
+
+    console.log(query);
+
     try {
-        // fetch all uncompletedTask from db
-        const uncompletedTask = await Task.find({ completed: false })
+        const tasks = await query;
 
-        // All task completed, return 
-        if (!uncompletedTask.length) return res.send('All Task Completed')
-
-        res.send(uncompletedTask)
+        res.status(200).send(tasks);
     } catch (e) {
-        res.status(400).send(e)
+        res.status(500).send(e)
     }
 })
 
@@ -61,7 +75,7 @@ router.patch('/:id', async (req, res) => {
     try {
         // const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true})
 
-        const task = await Task.findById(req.params.id);
+        const task = await Task.findOne({ _id: req.params.id, owner: req.user._id });
 
         if (!task) {
             // Handle Task not found
@@ -77,11 +91,16 @@ router.patch('/:id', async (req, res) => {
     }
 })
 
+// delete a task
 router.delete('/:id', async (req, res) => {
     try {
-        const task = await Task.findByIdAndDelete(req.params.id)
+        const task = await Task.findOneAndDelete({ _id: req.params.id, owner: req.user._id });
 
-        if (!task) return res.status(404).send('Task Not found')
+        if (!task) 
+            return res.status(404).json({
+                error: true,
+                message: "Task not found"
+            })
 
         res.send(task)
     } catch (e) {
