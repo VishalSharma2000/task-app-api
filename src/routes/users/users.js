@@ -5,7 +5,7 @@ const auth = require('../../middleware/auth');
 const User = require('../../models/User');
 
 const upload = multer({
-    dest: 'avatars',
+    // dest: 'avatars',
     limits: {
         fileSize: 1024*1024 // should be in bytes
     },
@@ -37,9 +37,19 @@ router.get('/:id', async (req, res) => {
     }
 })
 
+/* 
+When the used middleware throws a error, we can use a 4th argument in the route for handling the error.
+But the format of the 4th argument(callback function) should be properly matched. (error, req, res, next)
+
+Note: if the dest key is not specified in the multer config, then we will be able to access the uploaded file's buffer in req.file
+otherwise we won't be able to access the buffer file
+ */
 // upload user profile
-router.post('/me/avatar', upload.single('avatar'), (req, res) => {
-    res.send('File uploaded successfully');
+router.post('/me/avatar', upload.single('avatar'), async (req, res) => {
+    req.user.avatar = req.file.buffer;
+    await req.user.save();
+
+    res.send();
 }, (error, req, res, next) => {
     res.status(400).send({ error: error.message });
 });
