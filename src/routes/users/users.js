@@ -1,7 +1,25 @@
 const express = require('express');
+const multer = require('multer');
 const router = express.Router();
 const auth = require('../../middleware/auth');
 const User = require('../../models/User');
+
+const upload = multer({
+    dest: 'avatars',
+    limits: {
+        fileSize: 1024*1024 // should be in bytes
+    },
+    fileFilter(req, file, cb) {
+        let fileName = file.originalname;
+
+        // $ is used to say that the value should be at end.
+        if(!fileName.match(/\.(jpg|jpeg|png)$/)) {
+            return cb(new Error('File not supported'))
+        }
+
+        cb(undefined, 'File upload Successfully');
+    }
+})
 
 router.get('/me', async (req, res) => {
     // send only the user details which logged in 
@@ -18,6 +36,13 @@ router.get('/:id', async (req, res) => {
         res.status(500).send(e)
     }
 })
+
+// upload user profile
+router.post('/me/avatar', upload.single('avatar'), (req, res) => {
+    res.send('File uploaded successfully');
+}, (error, req, res, next) => {
+    res.status(400).send({ error: error.message });
+});
 
 router.patch('/me', async (req, res) => {
     const updates = Object.keys(req.body)       // extracting what updates user want to make
