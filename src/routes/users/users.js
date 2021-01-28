@@ -7,13 +7,13 @@ const User = require('../../models/User');
 const upload = multer({
     // dest: 'avatars',
     limits: {
-        fileSize: 1024*1024 // should be in bytes
+        fileSize: 1024 * 1024 // should be in bytes
     },
     fileFilter(req, file, cb) {
         let fileName = file.originalname;
 
         // $ is used to say that the value should be at end.
-        if(!fileName.match(/\.(jpg|jpeg|png)$/)) {
+        if (!fileName.match(/\.(jpg|jpeg|png)$/)) {
             return cb(new Error('File not supported'))
         }
 
@@ -30,12 +30,29 @@ router.get('/:id', async (req, res) => {
     try {
         const user = await User.findById(req.params.id)
         if (!user) return res.status(404).send('Wrong id')
-
+  
         res.status(200).send(user)
     } catch (e) {
         res.status(500).send(e)
     }
-})
+  });
+  
+router.get('/:id/avatar', async (req, res) => {
+try {
+    const user = await User.findById(req.params.id);
+
+    if(!user || !user.avatar) {
+    throw new Error({
+        message: "Avatar does not exist"
+    })
+    }
+
+    res.set('Content-Type', 'image/jpg');
+    res.status(200).send(user.avatar);
+} catch (e) {
+
+}
+});
 
 /* 
 When the used middleware throws a error, we can use a 4th argument in the route for handling the error.
@@ -43,16 +60,26 @@ But the format of the 4th argument(callback function) should be properly matched
 
 Note: if the dest key is not specified in the multer config, then we will be able to access the uploaded file's buffer in req.file
 otherwise we won't be able to access the buffer file
- */
+*/
 // upload user profile
-router.post('/me/avatar', upload.single('avatar'), async (req, res) => {
-    req.user.avatar = req.file.buffer;
-    await req.user.save();
+router.route('/me/avatar')
+    .post(upload.single('avatar'), async (req, res) => {
+        req.user.avatar = req.file.buffer;
+        await req.user.save();
 
-    res.send();
-}, (error, req, res, next) => {
-    res.status(400).send({ error: error.message });
-});
+        res.send();
+    }, (error, req, res, next) => {
+        res.status(400).send({ error: error.message });
+    })
+    .delete(async (req, res) => {
+        req.user.avatar = undefined;
+
+        await req.user.save();
+        res.json({
+            error: false,
+            message: "Avatar deleted succesfully"
+        });
+    })
 
 router.patch('/me', async (req, res) => {
     const updates = Object.keys(req.body)       // extracting what updates user want to make

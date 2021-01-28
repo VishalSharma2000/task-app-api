@@ -35,7 +35,6 @@ router.get('/', async (req, res) => {
     if(skip) query.skip(parseInt(skip));
     if(sortBy) query.sort({ [sortBy]: order === 'desc' ? -1 : 1 })
 
-    console.log(query);
 
     try {
         const tasks = await query;
@@ -86,7 +85,6 @@ router.patch('/:id', async (req, res) => {
         await task.save();
         res.send(task)
     } catch (e) {
-        console.log(e)
         res.status(400).send(e)
     }
 })

@@ -18,9 +18,7 @@ const {PRIVATE_KEY_JWT} = process.env;
 const auth = async (req, res, next) => {
   try {
     // header => Bearer token
-    // console.log(req.headers);
     const token = req.headers['authorization'].split(' ')[1]; // if header is not provided then for catching the error catch block will be ran
-    // console.log(token);
     const decoded = jwt.verify(token, PRIVATE_KEY_JWT);
 
     // check for the user with id, and token
