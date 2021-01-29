@@ -1,5 +1,7 @@
 const express = require('express');
 const multer = require('multer');
+const sharp = require('sharp');
+
 const router = express.Router();
 const auth = require('../../middleware/auth');
 const User = require('../../models/User');
@@ -30,28 +32,30 @@ router.get('/:id', async (req, res) => {
     try {
         const user = await User.findById(req.params.id)
         if (!user) return res.status(404).send('Wrong id')
-  
+
         res.status(200).send(user)
     } catch (e) {
         res.status(500).send(e)
     }
-  });
-  
+});
+
 router.get('/:id/avatar', async (req, res) => {
-try {
-    const user = await User.findById(req.params.id);
+    try {
+        const user = await User.findById(req.params.id);
 
-    if(!user || !user.avatar) {
-    throw new Error({
-        message: "Avatar does not exist"
-    })
+        if (!user || !user.avatar) {
+            throw new Error({
+                message: "Avatar does not exist"
+            })
+        }
+
+        res.set('Content-Type', 'image/jpg');
+        res.status(200).send(user.avatar);
+    } catch (e) {
+        res.status(400).send({
+            message: e
+        })
     }
-
-    res.set('Content-Type', 'image/jpg');
-    res.status(200).send(user.avatar);
-} catch (e) {
-
-}
 });
 
 /* 
@@ -64,7 +68,8 @@ otherwise we won't be able to access the buffer file
 // upload user profile
 router.route('/me/avatar')
     .post(upload.single('avatar'), async (req, res) => {
-        req.user.avatar = req.file.buffer;
+        const buffer = await sharp(req.file.buffer).resize(300).png().toBuffer();
+        req.user.avatar = buffer;
         await req.user.save();
 
         res.send();
