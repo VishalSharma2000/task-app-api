@@ -1,7 +1,10 @@
+require('dotenv').config();
 const mongoose = require('mongoose')
 
-const server = "localhost:27017";
-const database = "task-app";
+const {
+    MONGODB_URL: server,
+    DATABASE: database
+} = process.env;
 
 mongoose.connect(`mongodb://${server}/${database}`, {
     useNewUrlParser: true,
