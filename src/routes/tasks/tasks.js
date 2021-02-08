@@ -27,13 +27,13 @@ router.get('/', async (req, res) => {
     let match = {};
     match.owner = req.user._id;
 
-    if(completed) 
+    if (completed)
         match.completed = completed === 'true' ? true : false;
 
     let query = Task.find(match);
-    if(limit) query.limit(parseInt(limit));
-    if(skip) query.skip(parseInt(skip));
-    if(sortBy) query.sort({ [sortBy]: order === 'desc' ? -1 : 1 })
+    if (limit) query.limit(parseInt(limit));
+    if (skip) query.skip(parseInt(skip));
+    if (sortBy) query.sort({ [sortBy]: order === 'desc' ? -1 : 1 })
 
 
     try {
@@ -53,9 +53,9 @@ router.get('/:id', async (req, res) => {
     try {
         const task = await Task.findOne({ _id, owner: user._id });
 
-        if(!task) 
-            return res.status(404).json({ msg: "Task not found"});
-        
+        if (!task)
+            return res.status(404).json({ msg: "Task not found" });
+
         res.status(200).send(task);
     } catch (e) {
         res.status(500).send(e);
@@ -94,7 +94,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const task = await Task.findOneAndDelete({ _id: req.params.id, owner: req.user._id });
 
-        if (!task) 
+        if (!task)
             return res.status(404).json({
                 error: true,
                 message: "Task not found"
